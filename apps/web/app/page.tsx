@@ -1,330 +1,283 @@
 'use client';
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import type { LiveStream, ViralAlert, ViralSnapshot } from '@streampulse/shared';
+import { useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
+import { motion } from 'framer-motion';
+import type {
+  AggregateMetrics,
+  DropOffAlert,
+  Insight,
+  Movie,
+} from '@streampulse/shared';
+import { Hero } from '../components/Hero';
+import { MovieRow } from '../components/MovieRow';
+import { InsightPanel } from '../components/InsightPanel';
+import { TopList, AlertList } from '../components/AnalyticsLists';
 import { Sidebar } from '../components/viral/Sidebar';
-import { StreamCard } from '../components/viral/StreamCard';
-import { WhyTrending } from '../components/viral/WhyTrending';
-import { VelocityChart } from '../components/viral/VelocityChart';
-import { AlertFeed } from '../components/viral/AlertFeed';
 import { StatGlass } from '../components/viral/StatGlass';
-import { ViralBadge } from '../components/viral/ViralBadge';
 import { RecruiterTour } from '../components/viral/RecruiterTour';
-import { ViralSimulator } from '../lib/viralSim';
+import { SAMPLE_MOVIES } from '../lib/sampleMovies';
+import { LocalSimulator } from '../lib/localSim';
 
 export default function HomePage() {
-  const [snapshot, setSnapshot] = useState<ViralSnapshot | null>(null);
-  const [alerts, setAlerts] = useState<ViralAlert[]>([]);
-  const [activeId, setActiveId] = useState<string | null>(null);
-  const [spikingId, setSpikingId] = useState<string | null>(null);
+  const [metrics, setMetrics] = useState<AggregateMetrics | null>(null);
+  const [insight, setInsight] = useState<Insight | null>(null);
+  const [alerts, setAlerts] = useState<DropOffAlert[]>([]);
   const [tourOpen, setTourOpen] = useState(false);
-  const [running, setRunning] = useState(true);
-  const simRef = useRef<ViralSimulator | null>(null);
+  const [featuredIdx, setFeaturedIdx] = useState(0);
 
+  // Drive live viewer counts + AI insights via the in-browser simulator.
+  // Same data shape we'd swap for a real WebSocket in production.
   useEffect(() => {
-    const sim = new ViralSimulator({
-      onSnapshot: setSnapshot,
-      onAlert: (a) => setAlerts((prev) => [a, ...prev].slice(0, 8)),
-      onSpike: (id) => {
-        setSpikingId(id);
-        setActiveId(id);
-        setTimeout(() => setSpikingId(null), 25_000);
+    const sim = new LocalSimulator(
+      {
+        onMetrics: (m) => {
+          setMetrics(m);
+          setAlerts(m.dropOffAlerts);
+        },
+        onInsight: setInsight,
       },
-    });
-    simRef.current = sim;
+      { users: 120, hz: 8 },
+    );
     sim.start();
     return () => sim.stop();
   }, []);
 
-  const streams = snapshot?.streams ?? [];
-  const active: LiveStream | null =
-    streams.find((s) => s.id === activeId) ?? streams[0] ?? null;
+  // Auto-rotate the Hero across the playable catalog every 12s.
+  const playable = useMemo(() => SAMPLE_MOVIES.filter((m) => m.streamUrl), []);
+  useEffect(() => {
+    if (playable.length < 2) return;
+    const id = setInterval(() => setFeaturedIdx((i) => (i + 1) % playable.length), 12_000);
+    return () => clearInterval(id);
+  }, [playable.length]);
+  const featured: Movie = playable[featuredIdx] ?? SAMPLE_MOVIES[0]!;
 
-  const triggerSpike = () => simRef.current?.triggerSpike();
+  // Sort the catalog by live viewers from the simulator.
+  const trending = useMemo(() => {
+    if (!metrics?.topMovies?.length) return SAMPLE_MOVIES;
+    const order = new Map(metrics.topMovies.map((t, i) => [t.movieId, i]));
+    return [...SAMPLE_MOVIES].sort((a, b) => {
+      const ai = order.has(a.id) ? (order.get(a.id) as number) : 999;
+      const bi = order.has(b.id) ? (order.get(b.id) as number) : 999;
+      return ai - bi;
+    });
+  }, [metrics]);
 
-  const startStop = () => {
-    if (running) {
-      simRef.current?.stop();
-    } else {
-      simRef.current?.start();
-    }
-    setRunning(!running);
-  };
-
-  const totalViewers = useMemo(
-    () => streams.reduce((a, s) => a + s.signals.viewers, 0),
-    [streams],
-  );
-  const avgScore = useMemo(
-    () => (streams.length ? Math.round(streams.reduce((a, s) => a + s.viralScore, 0) / streams.length) : 0),
-    [streams],
-  );
-  const viralCount = useMemo(() => streams.filter((s) => s.viralScore >= 80).length, [streams]);
-
-  // Build the chart series from the active stream's viewer history.
-  const chartData = useMemo(() => {
-    if (!active) return [];
-    return active.viewerHistory.map((v, i) => ({ t: i, v }));
-  }, [active?.id, active?.viewerHistory]);
+  const featuredViewers =
+    metrics?.topMovies.find((t) => t.movieId === featured.id)?.activeViewers ?? 0;
+  const watchHours = metrics ? Math.round(metrics.totalWatchSeconds / 36) / 100 : 0;
 
   return (
     <div className="flex min-h-screen bg-bg text-ink">
       <Sidebar />
 
-      <main className="min-w-0 flex-1">
-        <TopBar
-          running={running}
-          onStartStop={startStop}
-          onTriggerSpike={triggerSpike}
-          onTour={() => setTourOpen(true)}
-        />
+      <div className="min-w-0 flex-1">
+        <TopBar onTour={() => setTourOpen(true)} />
 
-        {/* Hero / pitch */}
-        <section className="relative overflow-hidden border-b border-line/40">
-          <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top_right,rgba(124,92,255,0.18),transparent_60%),radial-gradient(ellipse_at_bottom_left,rgba(255,49,88,0.12),transparent_55%)]" />
-          <div className="mx-auto flex max-w-[1400px] flex-col gap-4 px-6 pb-8 pt-10 lg:flex-row lg:items-end lg:justify-between lg:px-10">
-            <div className="max-w-2xl">
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-accent2/30 bg-accent2/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-accent2">
-                <span className="h-1 w-1 rounded-full bg-accent2 animate-pulse" /> Viral Moment Engine
-              </span>
-              <h1 className="mt-3 text-4xl font-black leading-[1.05] tracking-tight text-ink sm:text-5xl">
-                Live stream discovery,{' '}
-                <span className="bg-gradient-to-r from-accent to-accent2 bg-clip-text text-transparent">
-                  scored in real time.
-                </span>
-              </h1>
-              <p className="mt-3 max-w-xl text-sm leading-relaxed text-ink2">
-                StreamPulse ranks live streams across Twitch, YouTube, Kick, and TikTok using a
-                weighted blend of viewer velocity, chat spike rate, sentiment, and anomaly
-                detection — and explains every score with an LLM narrative.
-              </p>
-              <div className="mt-5 flex flex-wrap items-center gap-2">
-                <button
-                  type="button"
-                  onClick={triggerSpike}
-                  className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-accent to-accent2 px-4 py-2.5 text-sm font-bold text-white shadow-glow transition hover:brightness-110"
-                >
-                  <span>▶</span> Start Live Demo
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setTourOpen(true)}
-                  className="inline-flex items-center gap-2 rounded-lg border border-line bg-panel/70 px-4 py-2.5 text-sm font-semibold text-ink backdrop-blur transition hover:bg-panel"
-                >
-                  Recruiter Demo →
-                </button>
-                <a
-                  href="/architecture"
-                  className="inline-flex items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-semibold text-ink2 transition hover:text-ink"
-                >
-                  System design
-                </a>
+        {/* Cinematic hero */}
+        <Hero key={featured.id} movie={featured} viewers={featuredViewers} />
+
+        {/* Live analytics strip — overlapping the hero like Netflix's "Top 10" */}
+        <section
+          id="analytics"
+          className="relative z-20 mx-auto -mt-20 max-w-[1400px] px-6 lg:px-10"
+        >
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="grid gap-3 sm:grid-cols-3"
+          >
+            <StatGlass
+              label="Watching now"
+              value={metrics?.activeUsers ?? 0}
+              tone="accent"
+              pulse
+              hint="Concurrent viewers across the catalog"
+            />
+            <StatGlass
+              label="Watch hours today"
+              value={watchHours.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+              tone="good"
+              hint="Cumulative session time since midnight"
+            />
+            <StatGlass
+              label="Active alerts"
+              value={alerts.length}
+              tone={alerts.length > 0 ? 'warn' : 'default'}
+              hint={alerts.length > 0 ? 'Titles with elevated drop-off' : 'No drop-off detected'}
+            />
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="mt-4"
+          >
+            <InsightPanel insight={insight} />
+          </motion.div>
+        </section>
+
+        {/* Catalog rows */}
+        <section id="catalog" className="mt-14 space-y-2">
+          <MovieRow
+            title="Trending now"
+            movies={trending.slice(0, 6)}
+            topMovies={metrics?.topMovies}
+            numbered
+          />
+          <MovieRow
+            title="Continue exploring"
+            movies={SAMPLE_MOVIES}
+            topMovies={metrics?.topMovies}
+          />
+          <MovieRow
+            title="Open-source cinema · Blender Foundation"
+            movies={SAMPLE_MOVIES.filter((m) =>
+              /Animation|Sci-Fi|Surreal|Drama/.test(m.tags.join(' ')),
+            )}
+            topMovies={metrics?.topMovies}
+          />
+        </section>
+
+        {/* Analytics detail */}
+        <section className="mx-auto mt-10 grid max-w-[1400px] gap-4 px-6 pb-16 lg:grid-cols-2 lg:px-10">
+          <div className="overflow-hidden rounded-2xl border border-line/60 bg-panel/60 shadow-card backdrop-blur">
+            <div className="border-b border-line/60 px-5 py-4">
+              <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-ink3">
+                Ranking engine
               </div>
+              <div className="text-sm font-semibold text-ink">Top titles right now</div>
             </div>
-
-            <div className="grid w-full grid-cols-2 gap-3 sm:grid-cols-4 lg:w-auto lg:grid-cols-4">
-              <StatGlass
-                label="Live streams"
-                value={streams.length}
-                tone="accent"
-                pulse
-                hint="ranked every 1s"
-              />
-              <StatGlass
-                label="Total viewers"
-                value={totalViewers >= 1000 ? `${(totalViewers / 1000).toFixed(1)}K` : totalViewers}
-                tone="good"
-              />
-              <StatGlass
-                label="Avg viral score"
-                value={avgScore}
-                tone="default"
-                hint="weighted across catalog"
-              />
-              <StatGlass
-                label="Going viral"
-                value={viralCount}
-                tone={viralCount > 0 ? 'warn' : 'default'}
-                hint="score ≥ 80"
-              />
+            <TopList topMovies={metrics?.topMovies ?? []} catalog={SAMPLE_MOVIES} />
+          </div>
+          <div className="overflow-hidden rounded-2xl border border-line/60 bg-panel/60 shadow-card backdrop-blur">
+            <div className="border-b border-line/60 px-5 py-4">
+              <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-ink3">
+                Alert dispatcher
+              </div>
+              <div className="text-sm font-semibold text-ink">Drop-off alerts</div>
             </div>
+            <AlertList alerts={alerts} />
           </div>
         </section>
 
-        {/* Main grid */}
-        <section className="mx-auto grid max-w-[1400px] gap-6 px-6 py-8 lg:grid-cols-[1fr_360px] lg:px-10">
-          <div className="min-w-0 space-y-6">
-            {/* Why trending panel */}
-            <WhyTrending stream={active} />
-
-            {/* Velocity chart */}
-            <div className="overflow-hidden rounded-2xl border border-line/60 bg-panel/60 backdrop-blur">
-              <div className="flex items-end justify-between gap-3 border-b border-line/60 px-5 py-4">
-                <div>
-                  <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-ink3">
-                    Concurrent viewers · last 60s
-                  </div>
-                  <div className="text-sm font-semibold text-ink">
-                    {active ? `${active.channel} — ${active.title.slice(0, 60)}` : 'Select a stream'}
-                  </div>
-                </div>
-                {active && <ViralBadge score={active.viralScore} pulsing={spikingId === active.id} />}
-              </div>
-              <div className="px-2 py-3">
-                <VelocityChart data={chartData} />
-              </div>
-            </div>
-
-            {/* Stream list */}
-            <div>
-              <div className="mb-3 flex items-baseline justify-between">
-                <h2 className="text-sm font-bold uppercase tracking-[0.18em] text-ink2">
-                  Ranked streams
-                </h2>
-                <span className="text-[11px] text-ink3">
-                  {snapshot?.eventsPerSecond?.toFixed(1) ?? '0.0'} events/s ·{' '}
-                  {snapshot?.totalEvents.toLocaleString() ?? 0} processed
+        {/* Recruiter rail */}
+        <section className="mx-auto max-w-[1400px] px-6 pb-16 lg:px-10">
+          <div className="relative overflow-hidden rounded-2xl border border-line/60 bg-gradient-to-br from-panel via-panel to-bg p-7">
+            <div className="absolute -right-24 -top-24 h-64 w-64 rounded-full bg-accent2/15 blur-3xl" />
+            <div className="absolute -left-16 bottom-0 h-48 w-48 rounded-full bg-accent/10 blur-3xl" />
+            <div className="relative grid gap-6 lg:grid-cols-[1fr_auto] lg:items-center">
+              <div>
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-accent2/30 bg-accent2/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-accent2">
+                  For recruiters
                 </span>
+                <h3 className="mt-3 text-2xl font-black tracking-tight text-ink sm:text-3xl">
+                  Built like a real streaming-platform engineering team would.
+                </h3>
+                <p className="mt-2 max-w-2xl text-sm leading-relaxed text-ink2">
+                  Real-time ingestion, weighted-feature scoring, anomaly detection, LLM-powered
+                  insights, WebSocket alert dispatch, and a failure-soft simulator fallback —
+                  wired into a Netflix-style browsing experience.
+                </p>
               </div>
-              <div className="grid gap-2.5">
-                <AnimatePresence>
-                  {streams.map((s, i) => (
-                    <StreamCard
-                      key={s.id}
-                      stream={s}
-                      rank={i + 1}
-                      active={active?.id === s.id}
-                      spiking={spikingId === s.id}
-                      onClick={() => setActiveId(s.id)}
-                    />
-                  ))}
-                </AnimatePresence>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => setTourOpen(true)}
+                  className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-accent to-accent2 px-5 py-2.5 text-sm font-bold text-white shadow-glow transition hover:brightness-110"
+                >
+                  Recruiter Demo →
+                </button>
+                <Link
+                  href="/architecture"
+                  className="inline-flex items-center gap-2 rounded-full border border-line bg-panel/70 px-5 py-2.5 text-sm font-semibold text-ink backdrop-blur transition hover:bg-panel"
+                >
+                  Architecture
+                </Link>
+                <Link
+                  href="/case-study"
+                  className="inline-flex items-center gap-2 rounded-full border border-line bg-panel/70 px-5 py-2.5 text-sm font-semibold text-ink backdrop-blur transition hover:bg-panel"
+                >
+                  Case study
+                </Link>
               </div>
             </div>
           </div>
-
-          {/* Side rail */}
-          <aside className="space-y-6">
-            <AlertFeed alerts={alerts} />
-            <ArchitecturePeek />
-          </aside>
         </section>
 
         <footer className="border-t border-line/40">
           <div className="mx-auto flex max-w-[1400px] flex-col items-start justify-between gap-2 px-6 py-8 text-[11px] text-ink3 sm:flex-row sm:items-center lg:px-10">
             <div>
-              © {new Date().getFullYear()} StreamPulse · Real-time stream intelligence (demo).
+              © {new Date().getFullYear()} StreamPulse · Real-time streaming intelligence (demo).
             </div>
             <div className="flex gap-4">
-              <a href="/architecture" className="hover:text-ink">Architecture</a>
-              <a href="/case-study" className="hover:text-ink">Case study</a>
+              <Link href="/architecture" className="hover:text-ink">
+                Architecture
+              </Link>
+              <Link href="/case-study" className="hover:text-ink">
+                Case study
+              </Link>
               <a
                 href="https://github.com/haroldflint63/streampulse-ai"
-                className="hover:text-ink"
                 target="_blank"
                 rel="noreferrer"
+                className="hover:text-ink"
               >
                 GitHub
               </a>
             </div>
           </div>
         </footer>
-      </main>
+      </div>
 
-      <RecruiterTour open={tourOpen} onClose={() => setTourOpen(false)} onTriggerSpike={triggerSpike} />
+      <RecruiterTour open={tourOpen} onClose={() => setTourOpen(false)} />
     </div>
   );
 }
 
-function TopBar({
-  running,
-  onStartStop,
-  onTriggerSpike,
-  onTour,
-}: {
-  running: boolean;
-  onStartStop: () => void;
-  onTriggerSpike: () => void;
-  onTour: () => void;
-}) {
+function TopBar({ onTour }: { onTour: () => void }) {
   return (
-    <header className="sticky top-0 z-20 border-b border-line/40 bg-bg/70 backdrop-blur-xl">
-      <div className="mx-auto flex max-w-[1400px] items-center justify-between gap-3 px-6 py-3 lg:px-10">
+    <header className="absolute inset-x-0 top-0 z-30 lg:left-60">
+      <div className="mx-auto flex max-w-[1400px] items-center justify-between gap-3 px-6 py-5 lg:px-10">
         <div className="flex items-center gap-3 lg:hidden">
-          <span className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-gradient-to-br from-accent to-accent2 text-xs font-black text-white">
+          <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-accent to-accent2 text-xs font-black text-white shadow-glow">
             SP
           </span>
-          <span className="text-sm font-bold text-ink">StreamPulse</span>
+          <span className="text-base font-bold tracking-tight text-ink">StreamPulse</span>
         </div>
-        <div className="hidden items-center gap-2 text-[11px] text-ink2 lg:flex">
-          <span className={`inline-flex h-1.5 w-1.5 rounded-full ${running ? 'bg-good animate-pulse' : 'bg-ink3'}`} />
-          <span className="font-semibold uppercase tracking-[0.18em]">
-            {running ? 'Live · streaming' : 'Paused'}
-          </span>
+        <div className="hidden items-center gap-7 text-sm text-ink2 md:flex">
+          <Link href="#catalog" className="hover:text-ink">
+            Browse
+          </Link>
+          <Link href="#analytics" className="hover:text-ink">
+            Analytics
+          </Link>
+          <Link href="/architecture" className="hover:text-ink">
+            Architecture
+          </Link>
+          <Link href="/case-study" className="hover:text-ink">
+            Case study
+          </Link>
         </div>
-        <div className="flex items-center gap-1.5">
-          <button
-            type="button"
-            onClick={onStartStop}
-            className="rounded-md border border-line bg-panel/60 px-3 py-1.5 text-xs font-semibold text-ink2 backdrop-blur transition hover:text-ink"
-          >
-            {running ? 'Pause' : 'Resume'}
-          </button>
-          <button
-            type="button"
-            onClick={onTriggerSpike}
-            className="rounded-md bg-accent/15 px-3 py-1.5 text-xs font-bold text-accent transition hover:bg-accent/25"
-          >
-            ⚡ Trigger spike
-          </button>
+        <div className="ml-auto flex items-center gap-2">
           <button
             type="button"
             onClick={onTour}
-            className="rounded-md bg-gradient-to-r from-accent to-accent2 px-3 py-1.5 text-xs font-bold text-white shadow-glow"
+            className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-accent to-accent2 px-4 py-1.5 text-xs font-bold text-white shadow-glow"
           >
             Recruiter Demo
           </button>
+          <a
+            href="https://github.com/haroldflint63/streampulse-ai"
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-1.5 rounded-full border border-line bg-panel/70 px-3.5 py-1.5 text-xs font-medium text-ink2 backdrop-blur transition hover:text-ink"
+          >
+            GitHub
+          </a>
         </div>
       </div>
     </header>
-  );
-}
-
-function ArchitecturePeek() {
-  const layers = [
-    { label: 'Frontend · Next.js', tone: 'accent' },
-    { label: 'API Gateway · Fastify', tone: 'default' },
-    { label: 'Stream Ingestion · Redis Streams', tone: 'default' },
-    { label: 'AI Scoring Worker', tone: 'accent2' },
-    { label: 'Ranking DB · Postgres', tone: 'default' },
-    { label: 'WebSocket Alerts', tone: 'good' },
-  ] as const;
-  return (
-    <div className="overflow-hidden rounded-2xl border border-line/60 bg-panel/60 p-4 backdrop-blur">
-      <div className="flex items-center justify-between">
-        <div>
-          <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-ink3">
-            Architecture
-          </div>
-          <div className="text-sm font-semibold text-ink">Pipeline at a glance</div>
-        </div>
-        <a href="/architecture" className="text-xs font-semibold text-accent2 hover:underline">
-          Open →
-        </a>
-      </div>
-      <ol className="mt-3 space-y-1.5">
-        {layers.map((l, i) => (
-          <li
-            key={l.label}
-            className="flex items-center gap-2 rounded-md bg-bg/40 px-2.5 py-1.5 text-[11px] text-ink/85"
-          >
-            <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded bg-accent2/20 text-[10px] font-bold text-accent2">
-              {i + 1}
-            </span>
-            {l.label}
-          </li>
-        ))}
-      </ol>
-    </div>
   );
 }
