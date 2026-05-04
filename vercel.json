@@ -1,0 +1,6 @@
+{
+  "buildCommand": "npm run build -w @streampulse/shared && npm run build -w @streampulse/events && npm run build -w web",
+  "installCommand": "npm install",
+  "outputDirectory": "apps/web/.next",
+  "framework": "nextjs"
+}
