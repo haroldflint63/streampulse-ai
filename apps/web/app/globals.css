@@ -1,0 +1,30 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+html, body {
+  background: theme('colors.bg');
+  color: theme('colors.ink');
+  font-feature-settings: 'cv11', 'ss01', 'ss02';
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}
+
+/* Subtle grid backdrop for the dashboard hero. */
+.bg-grid {
+  background-image:
+    linear-gradient(rgba(124,92,255,0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(124,92,255,0.06) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+.scrollbar-thin::-webkit-scrollbar { width: 8px; height: 8px; }
+.scrollbar-thin::-webkit-scrollbar-thumb { background: theme('colors.line'); border-radius: 8px; }

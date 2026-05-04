@@ -1,0 +1,133 @@
+import type { Movie } from '@streampulse/shared';
+
+/**
+ * Mirror of apps/api/src/data/sampleMovies.ts so the client-side fallback
+ * has a catalog without needing the API. Keep these in sync.
+ */
+export const SAMPLE_MOVIES: Movie[] = [
+  {
+    id: 'ia-night-of-the-living-dead',
+    title: 'Night of the Living Dead',
+    year: 1968,
+    description:
+      "Romero's seminal indie horror that defined the modern zombie genre. Public domain.",
+    posterUrl: 'https://archive.org/services/img/night_of_the_living_dead',
+    streamUrl:
+      'https://archive.org/download/night_of_the_living_dead/night_of_the_living_dead_512kb.mp4',
+    runtimeMinutes: 96,
+    tags: ['horror', 'classic', 'public-domain'],
+  },
+  {
+    id: 'ia-the-general',
+    title: 'The General',
+    year: 1926,
+    description:
+      'Buster Keaton silent action comedy considered one of the greatest films ever made.',
+    posterUrl: 'https://archive.org/services/img/TheGeneral_8',
+    streamUrl: 'https://archive.org/download/TheGeneral_8/The_General_512kb.mp4',
+    runtimeMinutes: 78,
+    tags: ['comedy', 'silent', 'classic'],
+  },
+  {
+    id: 'ia-charade-1963',
+    title: 'Charade',
+    year: 1963,
+    description: 'Stanley Donen romantic thriller starring Cary Grant and Audrey Hepburn.',
+    posterUrl: 'https://archive.org/services/img/Charade19632',
+    streamUrl: 'https://archive.org/download/Charade19632/Charade%201963.mp4',
+    runtimeMinutes: 113,
+    tags: ['romance', 'thriller', 'classic'],
+  },
+  {
+    id: 'ia-his-girl-friday',
+    title: 'His Girl Friday',
+    year: 1940,
+    description:
+      'Howard Hawks screwball comedy about a fast-talking newspaper editor and his ex-wife.',
+    posterUrl: 'https://archive.org/services/img/HisGirlFriday_667',
+    streamUrl: 'https://archive.org/download/HisGirlFriday_667/His%20Girl%20Friday.mp4',
+    runtimeMinutes: 92,
+    tags: ['comedy', 'romance', 'classic'],
+  },
+  {
+    id: 'ia-detour-1945',
+    title: 'Detour',
+    year: 1945,
+    description: 'Edgar G. Ulmer noir about a hitchhiker whose life unravels on the road to LA.',
+    posterUrl: 'https://archive.org/services/img/Detour1945_201305',
+    streamUrl: 'https://archive.org/download/Detour1945_201305/Detour%201945.mp4',
+    runtimeMinutes: 68,
+    tags: ['noir', 'thriller', 'classic'],
+  },
+  {
+    id: 'ia-house-on-haunted-hill',
+    title: 'House on Haunted Hill',
+    year: 1959,
+    description: 'Vincent Price horror about guests offered $10,000 to survive the night.',
+    posterUrl: 'https://archive.org/services/img/HouseOnHauntedHill',
+    streamUrl: 'https://archive.org/download/HouseOnHauntedHill/HouseOnHauntedHill_512kb.mp4',
+    runtimeMinutes: 75,
+    tags: ['horror', 'classic'],
+  },
+  {
+    id: 'ia-plan-9',
+    title: 'Plan 9 from Outer Space',
+    year: 1959,
+    description: 'Ed Wood sci-fi cult favorite often called "the worst film ever made."',
+    posterUrl: 'https://archive.org/services/img/Plan9FromOuterSpace_215',
+    streamUrl:
+      'https://archive.org/download/Plan9FromOuterSpace_215/Plan%209%20from%20Outer%20Space.mp4',
+    runtimeMinutes: 79,
+    tags: ['sci-fi', 'cult', 'classic'],
+  },
+  {
+    id: 'ia-the-stranger-1946',
+    title: 'The Stranger',
+    year: 1946,
+    description: 'Orson Welles noir about a war crimes investigator hunting a fugitive Nazi.',
+    posterUrl: 'https://archive.org/services/img/TheStranger1946_201310',
+    streamUrl: 'https://archive.org/download/TheStranger1946_201310/The%20Stranger%201946.mp4',
+    runtimeMinutes: 95,
+    tags: ['noir', 'thriller', 'classic'],
+  },
+  {
+    id: 'ia-meet-john-doe',
+    title: 'Meet John Doe',
+    year: 1941,
+    description: 'Frank Capra political drama starring Gary Cooper and Barbara Stanwyck.',
+    posterUrl: 'https://archive.org/services/img/MeetJohnDoe_704',
+    streamUrl: 'https://archive.org/download/MeetJohnDoe_704/Meet%20John%20Doe.mp4',
+    runtimeMinutes: 122,
+    tags: ['drama', 'classic'],
+  },
+  {
+    id: 'ia-d-o-a-1949',
+    title: 'D.O.A.',
+    year: 1949,
+    description: 'Rudolph Mate noir about a man investigating his own murder before he dies.',
+    posterUrl: 'https://archive.org/services/img/DOA_1949',
+    streamUrl: 'https://archive.org/download/DOA_1949/DOA_1949_512kb.mp4',
+    runtimeMinutes: 83,
+    tags: ['noir', 'thriller', 'classic'],
+  },
+  {
+    id: 'ia-nosferatu',
+    title: 'Nosferatu',
+    year: 1922,
+    description: 'F.W. Murnau silent expressionist horror — the first vampire film.',
+    posterUrl: 'https://archive.org/services/img/Nosferatu1922_201312',
+    streamUrl: 'https://archive.org/download/Nosferatu1922_201312/Nosferatu%201922.mp4',
+    runtimeMinutes: 94,
+    tags: ['horror', 'silent', 'classic'],
+  },
+  {
+    id: 'ia-the-kid-1921',
+    title: 'The Kid',
+    year: 1921,
+    description: 'Charlie Chaplin silent classic about a tramp who adopts an abandoned child.',
+    posterUrl: 'https://archive.org/services/img/TheKid_201312',
+    streamUrl: 'https://archive.org/download/TheKid_201312/The%20Kid%201921.mp4',
+    runtimeMinutes: 68,
+    tags: ['comedy', 'silent', 'classic'],
+  },
+];

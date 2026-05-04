@@ -1,0 +1,16 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "paths": {
+      "@streampulse/shared": ["../../packages/shared/src"],
+      "@streampulse/events": ["../../packages/events/src"]
+    }
+  },
+  "references": [
+    { "path": "../../packages/shared" },
+    { "path": "../../packages/events" }
+  ],
+  "include": ["src/**/*"]
+}
