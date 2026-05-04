@@ -88,3 +88,90 @@ export type Result<T, E = Error> =
 
 export const ok = <T>(value: T): Result<T> => ({ ok: true, value });
 export const err = <E = Error>(error: E): Result<never, E> => ({ ok: false, error });
+
+/* ----------------------------------------------------------------------------
+ * Viral Moment Engine — types
+ * ----------------------------------------------------------------------------
+ * StreamPulse models live streams as a time-series feature vector.  The viral
+ * score is a weighted, bounded combination of normalized signals (each in
+ * [0,1]).  See `apps/web/lib/viralEngine.ts` for the formula and weights.
+ */
+
+export type StreamPlatform = 'twitch' | 'youtube' | 'kick' | 'tiktok';
+export type StreamCategory =
+  | 'gaming'
+  | 'irl'
+  | 'esports'
+  | 'music'
+  | 'talk'
+  | 'sports'
+  | 'creative';
+
+export interface LiveStream {
+  id: string;
+  platform: StreamPlatform;
+  channel: string;
+  title: string;
+  category: StreamCategory;
+  thumbnailUrl: string;
+  startedAt: number;
+  /** Most recent feature snapshot driving the viral score. */
+  signals: ViralSignals;
+  /** 0–100. Computed from signals via weighted sum. */
+  viralScore: number;
+  /** Short bullets explaining what drove the score, e.g. "Chat 3.2x normal". */
+  reasons: string[];
+  /** Last N viewer counts (rolling 60s) for sparklines + velocity. */
+  viewerHistory: number[];
+}
+
+export interface ViralSignals {
+  /** Current concurrent viewers. */
+  viewers: number;
+  /** % change in viewers over last 10 min. e.g. 0.42 = +42%. */
+  viewerVelocity: number;
+  /** Chat messages / second relative to channel baseline. 1.0 = normal. */
+  chatVelocity: number;
+  /** -1..1 — average sentiment of recent chat (NLP heuristic). */
+  sentiment: number;
+  /** 0..1 — match between title/category and current trending tags. */
+  trendMatch: number;
+  /** 0..1 — channel platform popularity (followers/log scale). */
+  platformPopularity: number;
+  /** 0..1 — z-score based abnormality detector (sudden spike likelihood). */
+  anomalyScore: number;
+}
+
+export interface ViralExplanation {
+  streamId: string;
+  /** 0..1 confidence the stream is having a viral moment. */
+  confidence: number;
+  /** 1-2 sentence narrative for the "Why this stream is trending" panel. */
+  narrative: string;
+  /** 3–5 short bullets of the strongest contributing signals. */
+  bullets: string[];
+  source: 'groq' | 'fallback';
+  generatedAt: number;
+}
+
+export interface ViralAlert {
+  streamId: string;
+  channel: string;
+  title: string;
+  viralScore: number;
+  /** "spike" = sudden anomaly; "rising" = sustained climb. */
+  kind: 'spike' | 'rising';
+  timestamp: number;
+}
+
+/** Snapshot used by the dashboard's live-demo simulator. */
+export interface ViralSnapshot {
+  streams: LiveStream[];
+  alerts: ViralAlert[];
+  serverTime: number;
+  /** Total events processed since the simulator started. */
+  totalEvents: number;
+  /** Events / second over the last 5s window. */
+  eventsPerSecond: number;
+}
+

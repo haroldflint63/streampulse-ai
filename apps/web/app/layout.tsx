@@ -3,12 +3,13 @@ import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 
 export const metadata: Metadata = {
-  title: 'StreamPulse — Real-time streaming analytics',
+  title: 'StreamPulse AI — Real-time Viral Moment Engine',
   description:
-    'Live watch metrics, drop-off detection, and AI-powered insights for streaming video platforms.',
+    'Real-time AI stream-discovery platform. Ranks live streams across Twitch, YouTube, Kick, and TikTok using anomaly-based viral scoring with LLM-generated explanations.',
   openGraph: {
-    title: 'StreamPulse',
-    description: 'Real-time streaming analytics with AI-powered insights.',
+    title: 'StreamPulse AI',
+    description:
+      'Live stream discovery, scored in real time. Anomaly-based viral detection + LLM narratives.',
     type: 'website',
   },
 };
