@@ -5,161 +5,193 @@ import type {
   DropOffAlert,
   Insight,
   Movie,
-  WatchEvent,
+  WsMessage,
 } from '@streampulse/shared';
-import { WsClient, type WsStatus } from '@/lib/wsClient';
-import { LocalSimulator } from '@/lib/localSim';
-import { SAMPLE_MOVIES } from '@/lib/sampleMovies';
-import { getMovies } from '@/lib/api';
-import { AppHeader } from '@/components/AppHeader';
-import { StatCard } from '@/components/StatCard';
-import { InsightBanner } from '@/components/InsightBanner';
-import { TopTitlesList } from '@/components/TopTitlesList';
-import { AlertsList } from '@/components/AlertsList';
-import { CatalogGrid } from '@/components/CatalogGrid';
+import { AppHeader } from '../components/AppHeader';
+import { Hero } from '../components/Hero';
+import { MovieRow } from '../components/MovieRow';
+import { Stat } from '../components/Stat';
+import { InsightPanel } from '../components/InsightPanel';
+import { TopList, AlertList } from '../components/AnalyticsLists';
+import { API_BASE, getMovies } from '../lib/api';
+import { WsClient, type WsStatus } from '../lib/wsClient';
+import { LocalSimulator } from '../lib/localSim';
+import { SAMPLE_MOVIES } from '../lib/sampleMovies';
 
-const WS_URL =
-  (typeof process !== 'undefined' && process.env.NEXT_PUBLIC_WS_URL) || '';
-
-export default function DashboardPage() {
-  const mode = useMemo<'live' | 'local'>(() => (WS_URL ? 'live' : 'local'), []);
-
-  const [, setStatus] = useState<WsStatus>('idle');
+export default function HomePage() {
+  const [catalog, setCatalog] = useState<Movie[]>(SAMPLE_MOVIES);
   const [metrics, setMetrics] = useState<AggregateMetrics | null>(null);
   const [insight, setInsight] = useState<Insight | null>(null);
-  const [movies, setMovies] = useState<Movie[]>(SAMPLE_MOVIES);
-  const [, setLastAlert] = useState<DropOffAlert | null>(null);
-  const eventsBuf = useRef<WatchEvent[]>([]);
+  const [alerts, setAlerts] = useState<DropOffAlert[]>([]);
+  const [status, setStatus] = useState<WsStatus>('idle');
+  const simRef = useRef<LocalSimulator | null>(null);
 
+  // Load catalog from API when available; fall back to bundled sample.
   useEffect(() => {
-    if (mode !== 'live') return;
-    void getMovies()
-      .then((m) => {
-        if (m.length > 0) setMovies(m);
-      })
+    let on = true;
+    if (!API_BASE) return;
+    getMovies()
+      .then((m) => on && m.length > 0 && setCatalog(m))
       .catch(() => {});
-  }, [mode]);
+    return () => {
+      on = false;
+    };
+  }, []);
 
+  // Connect to live metrics — server WS first, local simulator as fallback.
   useEffect(() => {
-    if (mode === 'live') {
-      const client = new WsClient(WS_URL);
-      const offS = client.onStatus(setStatus);
-      const offM = client.on((msg) => {
-        if (msg.type === 'metrics') setMetrics(msg.data);
-        else if (msg.type === 'event') eventsBuf.current.push(msg.data);
-        else if (msg.type === 'alert') setLastAlert(msg.data);
-        else if (msg.type === 'insight') setInsight(msg.data);
+    if (API_BASE) {
+      const wsUrl = API_BASE.replace(/^http/, 'ws') + '/ws';
+      const client = new WsClient(wsUrl);
+      const off = client.on((msg: WsMessage) => {
+        if (msg.type === 'metrics') {
+          setMetrics(msg.data);
+          setAlerts(msg.data.dropOffAlerts);
+        } else if (msg.type === 'insight') {
+          setInsight(msg.data);
+        } else if (msg.type === 'alert') {
+          setAlerts((prev) =>
+            [msg.data, ...prev.filter((a) => a.movieId !== msg.data.movieId)].slice(0, 5)
+          );
+        }
       });
+      const offStatus = client.onStatus(setStatus);
       client.connect();
       return () => {
-        offS();
-        offM();
+        off();
+        offStatus();
         client.disconnect();
       };
     }
+    // Local simulator fallback so the demo always feels alive.
+    setStatus('open');
     const sim = new LocalSimulator(
       {
-        onMetrics: setMetrics,
-        onEvent: (e) => eventsBuf.current.push(e),
-        onAlert: setLastAlert,
+        onMetrics: (m) => {
+          setMetrics(m);
+          setAlerts(m.dropOffAlerts);
+        },
         onInsight: setInsight,
       },
-      { users: 80, hz: 6 },
+      { users: 80, hz: 6 }
     );
+    simRef.current = sim;
     sim.start();
     return () => sim.stop();
-  }, [mode]);
+  }, []);
 
-  const watchHours = ((metrics?.totalWatchSeconds ?? 0) / 3600).toFixed(1);
+  const featured = useMemo(() => {
+    const playable = catalog.filter((m) => m.streamUrl);
+    return playable[0] ?? catalog[0];
+  }, [catalog]);
+
+  const trending = useMemo(() => {
+    if (!metrics?.topMovies?.length) return catalog;
+    const order = new Map(metrics.topMovies.map((t, i) => [t.movieId, i]));
+    return [...catalog].sort((a, b) => {
+      const ai = order.has(a.id) ? (order.get(a.id) as number) : 999;
+      const bi = order.has(b.id) ? (order.get(b.id) as number) : 999;
+      return ai - bi;
+    });
+  }, [catalog, metrics]);
+
+  const featuredViewers =
+    metrics?.topMovies.find((t) => t.movieId === featured?.id)?.activeViewers ?? 0;
+
+  const watchHours = metrics ? Math.round(metrics.totalWatchSeconds / 36) / 100 : 0;
 
   return (
-    <main className="min-h-screen bg-bg">
+    <main className="min-h-screen bg-bg text-ink">
       <AppHeader
         rightSlot={
-          mode === 'local' ? (
-            <span className="hidden items-center gap-1.5 rounded-full border border-line bg-white px-3 py-1.5 text-xs font-medium text-ink2 sm:inline-flex">
-              <span className="h-1.5 w-1.5 rounded-full bg-accent animate-pulse-soft" />
-              Demo data
-            </span>
-          ) : null
+          <span
+            className={`hidden items-center gap-1.5 rounded-full border border-line bg-panel/70 px-3 py-1.5 text-[11px] font-medium backdrop-blur sm:inline-flex ${
+              status === 'open' ? 'text-good' : 'text-ink2'
+            }`}
+          >
+            <span
+              className={`h-1.5 w-1.5 rounded-full ${
+                status === 'open' ? 'bg-good animate-pulse-soft' : 'bg-ink3'
+              }`}
+            />
+            {status === 'open' ? 'Live' : status}
+          </span>
         }
       />
 
-      <section className="mx-auto max-w-7xl px-6 pt-10">
-        <div className="max-w-2xl">
-          <h1 className="text-3xl font-semibold tracking-tight text-ink sm:text-4xl">
-            Know what your audience is watching, the moment it happens.
-          </h1>
-          <p className="mt-3 text-base leading-relaxed text-ink2">
-            StreamPulse turns raw video player events into a live picture of who's watching what,
-            where attention is sticking, and where it's slipping — so you can act before the numbers
-            harden.
-          </p>
-        </div>
+      {featured && <Hero movie={featured} viewers={featuredViewers} />}
 
-        <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <StatCard
-            label="Watching now"
-            value={metrics?.activeUsers ?? 0}
-            tone="accent"
-            hint="Active sessions in the last minute"
-          />
-          <StatCard
-            label="Watch time today"
-            value={watchHours}
-            unit="hrs"
-            hint="Total hours streamed across all titles"
-          />
-          <StatCard
-            label="Titles needing attention"
-            value={metrics?.dropOffAlerts.length ?? 0}
-            tone={(metrics?.dropOffAlerts.length ?? 0) > 0 ? 'bad' : 'good'}
-            hint="Audience drops off before the 30% mark"
-          />
-        </div>
-
-        <div className="mt-6">
-          <InsightBanner insight={insight} />
-        </div>
-
-        <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
-          <div className="rounded-xl border border-line bg-panel shadow-card">
-            <div className="flex items-center justify-between border-b border-line px-5 py-3.5">
-              <div>
-                <div className="text-sm font-semibold text-ink">Top right now</div>
-                <div className="text-xs text-ink2">Most-watched titles in the last minute</div>
-              </div>
-            </div>
-            <TopTitlesList topMovies={metrics?.topMovies ?? []} catalog={movies} />
+      {/* Live analytics strip */}
+      <section id="analytics" className="relative -mt-12 z-20">
+        <div className="mx-auto max-w-[1400px] px-6 lg:px-10">
+          <div className="grid gap-4 sm:grid-cols-3">
+            <Stat
+              label="Watching now"
+              value={metrics?.activeUsers ?? 0}
+              tone="accent"
+              hint="Concurrent viewers across the catalog."
+            />
+            <Stat
+              label="Watch hours today"
+              value={watchHours.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+              unit="hrs"
+              tone="good"
+              hint="Cumulative session time since midnight."
+            />
+            <Stat
+              label="Active alerts"
+              value={alerts.length}
+              tone={alerts.length > 0 ? 'warn' : 'default'}
+              hint={alerts.length > 0 ? 'Titles with elevated drop-off.' : 'No drop-off detected.'}
+            />
           </div>
-          <div className="rounded-xl border border-line bg-panel shadow-card">
-            <div className="flex items-center justify-between border-b border-line px-5 py-3.5">
-              <div>
-                <div className="text-sm font-semibold text-ink">Drop-off alerts</div>
-                <div className="text-xs text-ink2">Where audiences are leaving early</div>
-              </div>
-            </div>
-            <AlertsList alerts={metrics?.dropOffAlerts ?? []} />
+          <div className="mt-4">
+            <InsightPanel insight={insight} />
           </div>
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-6 py-12">
-        <div className="mb-5 flex items-end justify-between">
+      {/* Catalog rows */}
+      <section id="catalog" className="mt-14 space-y-2">
+        <MovieRow
+          title="Trending now"
+          movies={trending.slice(0, 6)}
+          topMovies={metrics?.topMovies}
+          numbered
+        />
+        <MovieRow
+          title="Continue exploring"
+          movies={catalog}
+          topMovies={metrics?.topMovies}
+        />
+      </section>
+
+      {/* Analytics detail */}
+      <section className="mx-auto mt-10 grid max-w-[1400px] gap-4 px-6 pb-20 lg:grid-cols-2 lg:px-10">
+        <div className="overflow-hidden rounded-xl border border-line bg-panel shadow-card">
+          <div className="border-b border-line px-5 py-4">
+            <div className="text-sm font-bold text-ink">Top titles right now</div>
+            <div className="text-xs text-ink2">Ranked by live concurrent viewers.</div>
+          </div>
+          <TopList topMovies={metrics?.topMovies ?? []} catalog={catalog} />
+        </div>
+        <div className="overflow-hidden rounded-xl border border-line bg-panel shadow-card">
+          <div className="border-b border-line px-5 py-4">
+            <div className="text-sm font-bold text-ink">Drop-off alerts</div>
+            <div className="text-xs text-ink2">Titles losing viewers in the first minute.</div>
+          </div>
+          <AlertList alerts={alerts} />
+        </div>
+      </section>
+
+      <footer className="border-t border-line">
+        <div className="mx-auto flex max-w-[1400px] flex-col items-start justify-between gap-2 px-6 py-8 text-xs text-ink3 sm:flex-row sm:items-center lg:px-10">
           <div>
-            <h2 className="text-xl font-semibold tracking-tight text-ink">Browse the catalog</h2>
-            <p className="mt-1 text-sm text-ink2">
-              Click any title to play it — your viewing data flows into the dashboard above.
-            </p>
+            © {new Date().getFullYear()} StreamPulse · Real-time streaming analytics demo.
           </div>
-        </div>
-        <CatalogGrid movies={movies} topMovies={metrics?.topMovies ?? []} />
-      </section>
-
-      <footer className="border-t border-line bg-panel">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-6 py-5 text-xs text-ink2">
-          <span>© 2026 StreamPulse · Open-source streaming analytics</span>
-          <span>Built with Fastify, Next.js, Redis Streams, Cohere & Groq</span>
+          <div>
+            Sample media courtesy of the Blender Foundation, W3C, and Google.
+          </div>
         </div>
       </footer>
     </main>

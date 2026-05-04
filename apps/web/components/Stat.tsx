@@ -1,10 +1,7 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 
-/**
- * Big numeric stat with a smooth tick when the value changes.
- */
-export function StatCard({
+export function Stat({
   label,
   value,
   unit,
@@ -25,7 +22,6 @@ export function StatCard({
       setTick((t) => t + 1);
     }
   }, [value]);
-
   const valueColor =
     tone === 'accent'
       ? 'text-accent'
@@ -36,18 +32,17 @@ export function StatCard({
           : tone === 'bad'
             ? 'text-bad'
             : 'text-ink';
-
   return (
-    <div className="rounded-xl border border-line bg-panel p-5 shadow-card transition-shadow hover:shadow-cardHover">
-      <div className="text-[11px] font-semibold uppercase tracking-wider text-ink2">{label}</div>
+    <div className="rounded-xl border border-line bg-panel p-5 shadow-card">
+      <div className="text-[11px] font-semibold uppercase tracking-[0.15em] text-ink2">{label}</div>
       <div
         key={tick}
-        className={`mt-3 flex items-baseline gap-1.5 text-4xl font-semibold tabular-nums ${valueColor} animate-rise-in`}
+        className={`mt-3 flex items-baseline gap-1.5 text-4xl font-bold tabular-nums ${valueColor} animate-rise-in`}
       >
         <span>{value}</span>
         {unit && <span className="text-lg font-medium text-ink2">{unit}</span>}
       </div>
-      {hint && <div className="mt-2 text-xs text-ink2">{hint}</div>}
+      {hint && <div className="mt-2 text-xs leading-relaxed text-ink2">{hint}</div>}
     </div>
   );
 }

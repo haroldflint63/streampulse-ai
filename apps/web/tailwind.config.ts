@@ -5,29 +5,33 @@ export default {
   theme: {
     extend: {
       colors: {
-        bg: '#f7f8fb',
-        panel: '#ffffff',
-        panel2: '#f1f3f8',
-        line: '#e4e7ef',
-        ink: '#0f172a',
-        ink2: '#64748b',
-        accent: '#4f46e5',
-        accent2: '#0ea5e9',
-        good: '#10b981',
-        warn: '#f59e0b',
-        bad: '#ef4444',
+        // Cinematic dark — inspired by Apple TV+ / HBO Max premium feel.
+        bg: '#0a0b0f',
+        panel: '#13151c',
+        panel2: '#1c1f2a',
+        line: '#272a36',
+        ink: '#f5f6fa',
+        ink2: '#a8aebd',
+        ink3: '#6b7184',
+        accent: '#ff3158',         // vivid coral red — call-to-action
+        accent2: '#7c5cff',        // electric purple — secondary
+        good: '#00d4a8',
+        warn: '#ffb547',
+        bad: '#ff4757',
       },
       fontFamily: {
         sans: ['ui-sans-serif', 'system-ui', '-apple-system', 'Inter', 'sans-serif'],
-        mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
+        display: ['ui-sans-serif', 'system-ui', '-apple-system', 'Inter', 'sans-serif'],
       },
       boxShadow: {
-        card: '0 1px 2px rgba(15, 23, 42, 0.04), 0 1px 3px rgba(15, 23, 42, 0.06)',
-        cardHover: '0 4px 12px rgba(15, 23, 42, 0.08)',
+        card: '0 4px 14px rgba(0, 0, 0, 0.35), 0 1px 0 rgba(255, 255, 255, 0.04) inset',
+        cardHover: '0 12px 32px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.08) inset',
+        glow: '0 0 28px rgba(255, 49, 88, 0.35)',
       },
       animation: {
         'pulse-soft': 'pulseSoft 2.2s ease-in-out infinite',
-        'rise-in': 'riseIn 220ms cubic-bezier(.2,.7,.2,1)',
+        'rise-in': 'riseIn 240ms cubic-bezier(.2,.7,.2,1)',
+        'fade-in': 'fadeIn 400ms ease-out',
       },
       keyframes: {
         pulseSoft: {
@@ -35,8 +39,12 @@ export default {
           '50%': { opacity: '0.55' },
         },
         riseIn: {
-          '0%': { opacity: '0', transform: 'translateY(4px)' },
+          '0%': { opacity: '0', transform: 'translateY(6px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        fadeIn: {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
         },
       },
     },

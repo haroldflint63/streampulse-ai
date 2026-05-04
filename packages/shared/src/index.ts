@@ -25,6 +25,8 @@ export interface Movie {
   year: number;
   description: string;
   posterUrl: string;
+  /** Optional 16:9 landscape image for hero / tile layouts. */
+  backdropUrl?: string;
   /** Direct video URL when available (e.g. Internet Archive .mp4). */
   streamUrl?: string;
   /** YouTube video id used as trailer fallback when streamUrl is missing. */

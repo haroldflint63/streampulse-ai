@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: light;
+  color-scheme: dark;
 }
 
 html, body {
@@ -17,6 +17,26 @@ html, body {
   * { animation: none !important; transition: none !important; }
 }
 
-.scrollbar-thin::-webkit-scrollbar { width: 8px; height: 8px; }
-.scrollbar-thin::-webkit-scrollbar-thumb { background: theme('colors.line'); border-radius: 8px; }
-.scrollbar-thin::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
+/* Hide horizontal scrollbar on row carousels (Netflix-style). */
+.row-scroll {
+  scrollbar-width: none;
+}
+.row-scroll::-webkit-scrollbar { display: none; }
+
+/* Subtle vignette overlay used on hero. */
+.hero-fade {
+  background: linear-gradient(
+    to top,
+    theme('colors.bg') 0%,
+    rgba(10, 11, 15, 0.4) 60%,
+    rgba(10, 11, 15, 0) 100%
+  );
+}
+.hero-fade-side {
+  background: linear-gradient(
+    to right,
+    rgba(10, 11, 15, 0.95) 0%,
+    rgba(10, 11, 15, 0.55) 45%,
+    rgba(10, 11, 15, 0) 100%
+  );
+}
