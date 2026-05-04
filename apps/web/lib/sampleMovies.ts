@@ -11,7 +11,7 @@ export const SAMPLE_MOVIES: Movie[] = [
       'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4c/Sintel_poster.jpg/400px-Sintel_poster.jpg',
     backdropUrl:
       'https://images.unsplash.com/photo-1518562180175-34a163b1a9a6?auto=format&fit=crop&w=1600&q=80',
-    streamUrl: 'https://media.w3.org/2010/05/sintel/trailer.mp4',
+    streamUrl: 'https://download.blender.org/durian/trailer/sintel_trailer-480p.mp4',
     runtimeMinutes: 15,
     tags: ['Animation', 'Fantasy', 'Adventure'],
   },
@@ -25,7 +25,7 @@ export const SAMPLE_MOVIES: Movie[] = [
       'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Big.Buck.Bunny.-.Opening.Screen.png/640px-Big.Buck.Bunny.-.Opening.Screen.png',
     backdropUrl:
       'https://images.unsplash.com/photo-1500964757637-c85e8a162699?auto=format&fit=crop&w=1600&q=80',
-    streamUrl: 'https://media.w3.org/2010/05/bunny/trailer.mp4',
+    streamUrl: 'https://media.w3.org/2010/05/bunny/movie.mp4',
     runtimeMinutes: 10,
     tags: ['Animation', 'Comedy', 'Family'],
   },
@@ -39,8 +39,7 @@ export const SAMPLE_MOVIES: Movie[] = [
       'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d4/Tears_of_Steel_poster.jpg/400px-Tears_of_Steel_poster.jpg',
     backdropUrl:
       'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1600&q=80',
-    streamUrl:
-      'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4',
+    streamUrl: 'https://media.w3.org/2010/05/sintel/trailer.mp4',
     runtimeMinutes: 12,
     tags: ['Sci-Fi', 'Drama'],
   },
@@ -59,33 +58,33 @@ export const SAMPLE_MOVIES: Movie[] = [
     tags: ['Animation', 'Surreal'],
   },
   {
-    id: 'for-bigger-joyrides',
-    title: 'For Bigger Joyrides',
-    year: 2013,
+    id: 'jellyfish-720',
+    title: 'Jellyfish in Motion',
+    year: 2021,
     description:
-      'A high-octane action reel filmed for the launch of Chromecast — pure adrenaline in 60 seconds.',
+      'A meditative 720p short of jellyfish drifting through deep water — used widely as a streaming benchmark for color and motion.',
     posterUrl:
-      'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/ForBiggerJoyrides.jpg',
+      'https://images.unsplash.com/photo-1559825481-12a05cc00344?auto=format&fit=crop&w=600&q=80',
     backdropUrl:
-      'https://images.unsplash.com/photo-1517649763962-0c623066013b?auto=format&fit=crop&w=1600&q=80',
+      'https://images.unsplash.com/photo-1559825481-12a05cc00344?auto=format&fit=crop&w=1600&q=80',
     streamUrl:
-      'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4',
+      'https://test-videos.co.uk/vids/jellyfish/mp4/h264/720/Jellyfish_720_10s_1MB.mp4',
     runtimeMinutes: 1,
-    tags: ['Action', 'Short'],
+    tags: ['Nature', 'Short'],
   },
   {
-    id: 'for-bigger-blazes',
-    title: 'For Bigger Blazes',
-    year: 2013,
+    id: 'big-buck-bunny-720',
+    title: 'Big Buck Bunny 720p Clip',
+    year: 2008,
     description:
-      'Vivid color, dramatic lighting, fire — a cinematic short built to push the limits of streaming quality.',
+      'A 10-second 720p clip from the Big Buck Bunny short — a quick taste before the full feature.',
     posterUrl:
-      'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/ForBiggerBlazes.jpg',
+      'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Big.Buck.Bunny.-.Opening.Screen.png/640px-Big.Buck.Bunny.-.Opening.Screen.png',
     backdropUrl:
-      'https://images.unsplash.com/photo-1547036967-23d11aacaee0?auto=format&fit=crop&w=1600&q=80',
+      'https://images.unsplash.com/photo-1500964757637-c85e8a162699?auto=format&fit=crop&w=1600&q=80',
     streamUrl:
-      'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
+      'https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/720/Big_Buck_Bunny_720_10s_1MB.mp4',
     runtimeMinutes: 1,
-    tags: ['Drama', 'Short'],
+    tags: ['Animation', 'Short'],
   },
 ];

@@ -83,7 +83,6 @@ export default function WatchPage({
               controls
               playsInline
               preload="metadata"
-              crossOrigin="anonymous"
               className="h-full w-full bg-black"
               onLoadedMetadata={() => setLoaded(true)}
               onPlay={() => send('play')}
