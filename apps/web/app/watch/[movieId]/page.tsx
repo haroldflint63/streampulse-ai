@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import type { Movie, WatchEvent } from '@streampulse/shared';
 import { SAMPLE_MOVIES } from '@/lib/sampleMovies';
 import { getMovie, getSimilar, postWatchEvent, API_BASE } from '@/lib/api';
+import { AppHeader } from '@/components/AppHeader';
 
 const sessionId =
   typeof window !== 'undefined'
@@ -31,8 +32,6 @@ export default function WatchPage() {
   useEffect(() => {
     let cancelled = false;
     void (async () => {
-      // If a backend exists, prefer its (richer) data, but always fall back
-      // to the bundled sample so first paint is instant.
       const fromApi = API_BASE ? await getMovie(movieId) : null;
       if (!cancelled && fromApi) setMovie(fromApi);
       const sim = API_BASE ? await getSimilar(movieId) : [];
@@ -40,9 +39,7 @@ export default function WatchPage() {
         if (sim.length > 0) setSimilar(sim);
         else
           setSimilar(
-            SAMPLE_MOVIES.filter((m) => m.id !== movieId)
-              .sort(() => Math.random() - 0.5)
-              .slice(0, 6),
+            SAMPLE_MOVIES.filter((m) => m.id !== movieId).slice(0, 4),
           );
       }
     })();
@@ -71,7 +68,6 @@ export default function WatchPage() {
     const onSeek = () => send('seek', v.currentTime);
     const onEnded = () => send('stop', v.currentTime);
     const onTime = () => {
-      // Throttle progress emits to ~one every 5s.
       if (Date.now() - lastEmit.current > 5000) {
         lastEmit.current = Date.now();
         send('progress', v.currentTime);
@@ -83,7 +79,6 @@ export default function WatchPage() {
     v.addEventListener('ended', onEnded);
     v.addEventListener('timeupdate', onTime);
     return () => {
-      // Final stop event when leaving the page so the aggregator can close out.
       send('stop', v.currentTime || 0);
       v.removeEventListener('play', onPlay);
       v.removeEventListener('pause', onPause);
@@ -96,10 +91,15 @@ export default function WatchPage() {
 
   if (!movie) {
     return (
-      <main className="min-h-screen bg-bg p-6">
-        <div className="mx-auto max-w-4xl text-center text-ink2">
-          <p>Movie not found.</p>
-          <Link href="/" className="mt-4 inline-block text-accent hover:text-accent2">
+      <main className="min-h-screen bg-bg">
+        <AppHeader />
+        <div className="mx-auto max-w-3xl px-6 py-24 text-center">
+          <h1 className="text-2xl font-semibold text-ink">We couldn't find that title.</h1>
+          <p className="mt-2 text-sm text-ink2">It may have been removed from the catalog.</p>
+          <Link
+            href="/"
+            className="mt-6 inline-flex items-center gap-1.5 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white shadow-card transition hover:bg-accent/90"
+          >
             ← Back to dashboard
           </Link>
         </div>
@@ -108,28 +108,26 @@ export default function WatchPage() {
   }
 
   return (
-    <main className="min-h-screen bg-bg pb-12">
-      <header className="border-b border-line bg-panel">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <Link href="/" className="inline-flex items-center gap-2 text-sm font-medium text-ink2 transition hover:text-ink">
-            <span aria-hidden>←</span> Back to dashboard
-          </Link>
-          <div className="text-xs text-ink2">
-            Your watch events feed the same analytics pipeline shown on the dashboard.
-          </div>
-        </div>
-      </header>
+    <main className="min-h-screen bg-bg">
+      <AppHeader />
 
       <section className="mx-auto max-w-6xl px-6 py-8">
-        <div className="overflow-hidden rounded-xl border border-line bg-black shadow-card">
+        <Link
+          href="/"
+          className="mb-5 inline-flex items-center gap-1.5 text-sm font-medium text-ink2 transition hover:text-ink"
+        >
+          <span aria-hidden>←</span> Back to dashboard
+        </Link>
+
+        <div className="overflow-hidden rounded-2xl border border-line bg-black shadow-card">
           {movie.streamUrl ? (
             <video
               ref={videoRef}
               src={movie.streamUrl}
               poster={movie.posterUrl}
               controls
-              autoPlay
               playsInline
+              preload="metadata"
               className="aspect-video w-full bg-black"
             />
           ) : movie.trailerYoutubeId ? (
@@ -142,39 +140,73 @@ export default function WatchPage() {
             />
           ) : (
             <div className="flex aspect-video items-center justify-center bg-panel2 text-sm text-ink2">
-              No legal stream available for this title.
+              Streaming source unavailable for this title.
             </div>
           )}
         </div>
 
-        <div className="mt-5 flex flex-wrap items-baseline gap-3">
-          <h1 className="text-2xl font-semibold text-ink">{movie.title}</h1>
-          <span className="font-mono text-sm text-ink2">{movie.year}</span>
-          <span className="font-mono text-xs text-ink2">{movie.runtimeMinutes} min</span>
-        </div>
-        <p className="mt-2 max-w-3xl text-sm leading-relaxed text-ink/80">{movie.description}</p>
-        <div className="mt-2 flex flex-wrap gap-2">
-          {movie.tags.map((t) => (
-            <span key={t} className="rounded border border-line px-2 py-0.5 text-[11px] uppercase tracking-wide text-ink2">
-              {t}
-            </span>
-          ))}
+        <div className="mt-6 grid grid-cols-1 gap-8 lg:grid-cols-3">
+          <div className="lg:col-span-2">
+            <div className="flex flex-wrap items-baseline gap-3">
+              <h1 className="text-3xl font-semibold tracking-tight text-ink">{movie.title}</h1>
+              <span className="text-sm text-ink2">{movie.year}</span>
+              <span className="text-sm text-ink2">·</span>
+              <span className="text-sm text-ink2">{movie.runtimeMinutes} min</span>
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {movie.tags.map((t) => (
+                <span
+                  key={t}
+                  className="rounded-full bg-panel2 px-2.5 py-1 text-xs font-medium text-ink2"
+                >
+                  {t}
+                </span>
+              ))}
+            </div>
+            <p className="mt-5 text-base leading-relaxed text-ink/80">{movie.description}</p>
+          </div>
+
+          <aside className="rounded-xl border border-line bg-panel p-5 shadow-card">
+            <div className="text-sm font-semibold text-ink">Live engagement</div>
+            <p className="mt-1.5 text-xs text-ink2">
+              Every play, pause, seek, and view-progress event from this player is being sent to the
+              dashboard in real time.
+            </p>
+            <Link
+              href="/"
+              className="mt-4 inline-flex items-center gap-1.5 rounded-lg border border-line bg-white px-3 py-2 text-xs font-medium text-ink transition hover:border-accent/50 hover:shadow-card"
+            >
+              Open dashboard in another tab →
+            </Link>
+          </aside>
         </div>
 
-        <h2 className="mt-10 text-xs uppercase tracking-wider text-ink2">Because you watched</h2>
-        <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-6">
-          {similar.map((m) => (
-            <Link
-              key={m.id}
-              href={`/watch/${encodeURIComponent(m.id)}`}
-              className="group overflow-hidden rounded-md border border-line bg-panel transition hover:border-accent/60"
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={m.posterUrl} alt={m.title} className="aspect-video w-full object-cover" loading="lazy" />
-              <div className="px-2 py-1.5 text-[11px] truncate text-ink/90">{m.title}</div>
-            </Link>
-          ))}
-        </div>
+        {similar.length > 0 && (
+          <>
+            <h2 className="mt-12 text-lg font-semibold text-ink">More to watch</h2>
+            <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+              {similar.map((m) => (
+                <Link
+                  key={m.id}
+                  href={`/watch/${encodeURIComponent(m.id)}`}
+                  className="group overflow-hidden rounded-xl border border-line bg-panel shadow-card transition-all hover:-translate-y-0.5 hover:border-accent/40 hover:shadow-cardHover"
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={m.posterUrl}
+                    alt={m.title}
+                    className="aspect-video w-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+                    loading="lazy"
+                  />
+                  <div className="px-3 py-3">
+                    <div className="truncate text-sm font-semibold text-ink">{m.title}</div>
+                    <div className="text-xs text-ink2">{m.runtimeMinutes} min</div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </>
+        )}
       </section>
     </main>
   );
