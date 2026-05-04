@@ -4,7 +4,7 @@ import type { WsStatus } from '@/lib/wsClient';
 export function ConnectionStatus({ status, mode }: { status: WsStatus; mode: 'live' | 'local' }) {
   const dot =
     status === 'open'
-      ? 'bg-accent2'
+      ? 'bg-good'
       : status === 'connecting' || status === 'reconnecting'
         ? 'bg-warn animate-pulse-soft'
         : status === 'idle' && mode === 'local'
@@ -12,9 +12,9 @@ export function ConnectionStatus({ status, mode }: { status: WsStatus; mode: 'li
           : 'bg-bad';
   const label =
     mode === 'local'
-      ? 'Local demo (in-browser simulator)'
+      ? 'Demo mode'
       : status === 'open'
-        ? 'Live'
+        ? 'Connected'
         : status === 'connecting'
           ? 'Connecting…'
           : status === 'reconnecting'
@@ -22,13 +22,13 @@ export function ConnectionStatus({ status, mode }: { status: WsStatus; mode: 'li
             : status === 'closed'
               ? 'Disconnected'
               : status === 'error'
-                ? 'Error'
+                ? 'Connection error'
                 : 'Idle';
 
   return (
-    <div className="inline-flex items-center gap-2 rounded-full border border-line bg-panel px-3 py-1 text-xs text-ink2">
+    <div className="inline-flex items-center gap-2 rounded-full border border-line bg-white px-3 py-1.5 text-xs font-medium text-ink2">
       <span className={`inline-block h-2 w-2 rounded-full ${dot}`} />
-      <span className="font-mono">{label}</span>
+      <span>{label}</span>
     </div>
   );
 }

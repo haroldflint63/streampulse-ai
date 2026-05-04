@@ -5,7 +5,7 @@ import { useEffect, useRef } from 'react';
  * Tiny SVG spark-line — appends new values, drops oldest after `maxPoints`.
  * No charting library; we want zero kb of dependency for a 100-point line.
  */
-export function SparkLine({ values, max, color = '#7c5cff' }: { values: number[]; max?: number; color?: string }) {
+export function SparkLine({ values, max, color = '#4f46e5' }: { values: number[]; max?: number; color?: string }) {
   const ref = useRef<SVGPathElement | null>(null);
   const w = 240;
   const h = 56;

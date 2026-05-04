@@ -5,20 +5,25 @@ export default {
   theme: {
     extend: {
       colors: {
-        bg: '#0a0a0f',
-        panel: '#11121a',
-        panel2: '#171823',
-        line: '#23242f',
-        ink: '#e6e7ea',
-        ink2: '#9aa0ad',
-        accent: '#7c5cff',
-        accent2: '#36e3a8',
-        warn: '#ffb547',
-        bad: '#ff5566',
+        bg: '#f7f8fb',
+        panel: '#ffffff',
+        panel2: '#f1f3f8',
+        line: '#e4e7ef',
+        ink: '#0f172a',
+        ink2: '#64748b',
+        accent: '#4f46e5',
+        accent2: '#0ea5e9',
+        good: '#10b981',
+        warn: '#f59e0b',
+        bad: '#ef4444',
       },
       fontFamily: {
         sans: ['ui-sans-serif', 'system-ui', '-apple-system', 'Inter', 'sans-serif'],
         mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
+      },
+      boxShadow: {
+        card: '0 1px 2px rgba(15, 23, 42, 0.04), 0 1px 3px rgba(15, 23, 42, 0.06)',
+        cardHover: '0 4px 12px rgba(15, 23, 42, 0.08)',
       },
       animation: {
         'pulse-soft': 'pulseSoft 2.2s ease-in-out infinite',

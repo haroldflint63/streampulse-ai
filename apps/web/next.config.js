@@ -5,7 +5,7 @@ const nextConfig = {
   outputFileTracingRoot: path.join(__dirname, '../../'),
   images: {
     remotePatterns: [
-      { protocol: 'https', hostname: 'archive.org' },
+      { protocol: 'https', hostname: 'commondatastorage.googleapis.com' },
       { protocol: 'https', hostname: 'image.tmdb.org' },
     ],
   },

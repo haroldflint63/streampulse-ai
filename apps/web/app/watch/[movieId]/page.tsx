@@ -109,15 +109,19 @@ export default function WatchPage() {
 
   return (
     <main className="min-h-screen bg-bg pb-12">
-      <header className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
-        <Link href="/" className="text-sm text-ink2 hover:text-ink">← Dashboard</Link>
-        <div className="text-xs text-ink2">
-          Your watch events stream into the same pipeline as the simulator.
+      <header className="border-b border-line bg-panel">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+          <Link href="/" className="inline-flex items-center gap-2 text-sm font-medium text-ink2 transition hover:text-ink">
+            <span aria-hidden>←</span> Back to dashboard
+          </Link>
+          <div className="text-xs text-ink2">
+            Your watch events feed the same analytics pipeline shown on the dashboard.
+          </div>
         </div>
       </header>
 
-      <section className="mx-auto max-w-6xl px-6">
-        <div className="overflow-hidden rounded-xl border border-line bg-black">
+      <section className="mx-auto max-w-6xl px-6 py-8">
+        <div className="overflow-hidden rounded-xl border border-line bg-black shadow-card">
           {movie.streamUrl ? (
             <video
               ref={videoRef}
@@ -166,7 +170,7 @@ export default function WatchPage() {
               className="group overflow-hidden rounded-md border border-line bg-panel transition hover:border-accent/60"
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={m.posterUrl} alt={m.title} className="aspect-[2/3] w-full object-cover" loading="lazy" />
+              <img src={m.posterUrl} alt={m.title} className="aspect-video w-full object-cover" loading="lazy" />
               <div className="px-2 py-1.5 text-[11px] truncate text-ink/90">{m.title}</div>
             </Link>
           ))}

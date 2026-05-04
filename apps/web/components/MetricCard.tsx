@@ -29,17 +29,17 @@ export function MetricCard({
 
   return (
     <div
-      className={`rounded-xl border border-line bg-panel px-5 py-4 transition-colors ${
-        emphasize ? 'ring-1 ring-accent/40' : ''
+      className={`rounded-xl border bg-panel px-5 py-4 shadow-card transition-shadow hover:shadow-cardHover ${
+        emphasize ? 'border-accent/40' : 'border-line'
       }`}
     >
-      <div className="text-xs uppercase tracking-wider text-ink2">{label}</div>
+      <div className="text-xs font-medium uppercase tracking-wider text-ink2">{label}</div>
       <div
         key={tick}
-        className="mt-1 flex items-baseline gap-1 font-mono text-3xl text-ink animate-rise-in"
+        className="mt-2 flex items-baseline gap-1.5 font-mono text-3xl font-semibold text-ink animate-rise-in"
       >
         <span>{value}</span>
-        {unit && <span className="text-base text-ink2">{unit}</span>}
+        {unit && <span className="text-base font-normal text-ink2">{unit}</span>}
       </div>
       {hint && <div className="mt-1 text-xs text-ink2">{hint}</div>}
     </div>

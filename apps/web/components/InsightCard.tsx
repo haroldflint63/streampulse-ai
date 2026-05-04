@@ -3,22 +3,23 @@ import type { Insight } from '@streampulse/shared';
 
 export function InsightCard({ insight }: { insight: Insight | null }) {
   return (
-    <div className="rounded-xl border border-line bg-gradient-to-br from-panel to-panel2 p-5">
-      <div className="flex items-center gap-2">
-        <div className="text-xs uppercase tracking-wider text-ink2">AI Insight</div>
+    <div className="rounded-xl border border-line bg-panel p-5 shadow-card">
+      <div className="flex items-center justify-between gap-2">
+        <div className="text-sm font-medium text-ink">AI insight</div>
         <span
-          className={`rounded-full px-2 py-0.5 font-mono text-[10px] uppercase ${
-            insight?.source === 'groq' ? 'bg-accent/15 text-accent' : 'bg-line text-ink2'
+          className={`rounded-full px-2 py-0.5 font-mono text-[10px] uppercase tracking-wide ${
+            insight?.source === 'groq' ? 'bg-accent/10 text-accent' : 'bg-panel2 text-ink2'
           }`}
         >
-          {insight?.source === 'groq' ? 'groq' : 'rule-based'}
+          {insight?.source === 'groq' ? 'groq llama-3.1' : 'rule-based'}
         </span>
       </div>
       {insight ? (
         <>
           <p className="mt-3 text-sm leading-relaxed text-ink">{insight.insight}</p>
           <p className="mt-2 text-xs leading-relaxed text-ink2">
-            <span className="text-accent2">→</span> {insight.recommendation}
+            <span className="font-medium text-accent2">Recommendation · </span>
+            {insight.recommendation}
           </p>
         </>
       ) : (
