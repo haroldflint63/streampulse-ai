@@ -82,9 +82,20 @@ export default function WatchPage({
               poster={movie.backdropUrl ?? movie.posterUrl}
               controls
               playsInline
-              preload="metadata"
+              autoPlay
+              muted
+              preload="auto"
               className="h-full w-full bg-black"
-              onLoadedMetadata={() => setLoaded(true)}
+              onLoadedMetadata={() => {
+                setLoaded(true);
+                // Browsers allow muted autoplay; kick it off explicitly for safety.
+                const v = videoRef.current;
+                if (v && v.paused) {
+                  v.play().catch(() => {
+                    /* user-gesture required — controls are visible */
+                  });
+                }
+              }}
               onPlay={() => send('play')}
               onPause={() => send('pause')}
               onSeeked={() => send('seek')}

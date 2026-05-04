@@ -23,7 +23,6 @@ export default function HomePage() {
   const [insight, setInsight] = useState<Insight | null>(null);
   const [alerts, setAlerts] = useState<DropOffAlert[]>([]);
   const [tourOpen, setTourOpen] = useState(false);
-  const [featuredIdx, setFeaturedIdx] = useState(0);
 
   // Drive live viewer counts + AI insights via the in-browser simulator.
   // Same data shape we'd swap for a real WebSocket in production.
@@ -42,14 +41,12 @@ export default function HomePage() {
     return () => sim.stop();
   }, []);
 
-  // Auto-rotate the Hero across the playable catalog every 12s.
-  const playable = useMemo(() => SAMPLE_MOVIES.filter((m) => m.streamUrl), []);
-  useEffect(() => {
-    if (playable.length < 2) return;
-    const id = setInterval(() => setFeaturedIdx((i) => (i + 1) % playable.length), 12_000);
-    return () => clearInterval(id);
-  }, [playable.length]);
-  const featured: Movie = playable[featuredIdx] ?? SAMPLE_MOVIES[0]!;
+  // Featured = first title with a working stream URL. Stable across renders
+  // so the Play <Link> is never replaced mid-click.
+  const featured: Movie = useMemo(
+    () => SAMPLE_MOVIES.find((m) => m.streamUrl) ?? SAMPLE_MOVIES[0]!,
+    [],
+  );
 
   // Sort the catalog by live viewers from the simulator.
   const trending = useMemo(() => {
@@ -74,7 +71,7 @@ export default function HomePage() {
         <TopBar onTour={() => setTourOpen(true)} />
 
         {/* Cinematic hero */}
-        <Hero key={featured.id} movie={featured} viewers={featuredViewers} />
+        <Hero movie={featured} viewers={featuredViewers} />
 
         {/* Live analytics strip — overlapping the hero like Netflix's "Top 10" */}
         <section
