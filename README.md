@@ -2,7 +2,21 @@
 
 > Production-grade event-driven streaming observability platform — Fastify + Next.js + Redis Streams + Cohere + Groq.
 
-**Live demo:** _populated after first Vercel deploy_
+## 🎬 Live demo
+
+| | |
+|---|---|
+| **Dashboard (frontend)** | **[streampulse-ai.vercel.app](https://streampulse-ai.vercel.app)** |
+| **API + WebSocket (backend)** | Hosted on **Render** — see [render.yaml](render.yaml) |
+| **Source** | [github.com/haroldflint63/streampulse-ai](https://github.com/haroldflint63/streampulse-ai) |
+
+The dashboard runs end-to-end with **zero setup**: when no backend URL is configured, an in-browser simulator generates realistic watch events, drop-off alerts, and AI insights so the demo feels live the instant the page loads. Wire it up to a Render-hosted API for the full event-driven pipeline.
+
+### Deploy your own backend in one click
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/haroldflint63/streampulse-ai)
+
+Render reads [render.yaml](render.yaml) from the repo root and provisions a free Node web service that runs `npm run start:api` with `DEMO_MODE=true`, exposes `/health`, `/movies`, `/watch-event`, and a `/ws` WebSocket gateway. Set `NEXT_PUBLIC_API_BASE=https://<your-service>.onrender.com` on Vercel to connect the frontend.
 
 StreamPulse AI ingests a high-frequency stream of `play / pause / seek / progress / stop` events from a video player, aggregates them in 5s and 60s rolling windows, broadcasts deltas to every connected dashboard over WebSockets, detects audience drop-off in real time, and asks an LLM for a short natural-language read on what's happening — falling back to deterministic rules whenever the model is unavailable.
 
@@ -61,8 +75,22 @@ Open http://localhost:3000.
 
 ## Environment
 
-| Variable | Required | Notes |
-|----------|----------|-------|
+### Frontend — Vercel
+The web app is deployed at **[streampulse-ai.vercel.app](https://streampulse-ai.vercel.app)**. To deploy your own fork:
+
+```bash
+vercel --prod
+```
+
+The repo-root `vercel.json` builds the `@streampulse/shared` and `@streampulse/events` workspaces before `web`, then publishes `apps/web/.next`. With `NEXT_PUBLIC_API_BASE` empty, the dashboard runs an in-browser simulator and is fully demo-able with zero backend.
+
+### Backend — Render
+[`render.yaml`](render.yaml) provisions a free Node web service running `npm run start:api` with the demo simulator enabled. Two ways to deploy:
+
+1. **One-click:** click the *Deploy to Render* badge above.
+2. **CLI / dashboard:** push the repo, then on [render.com/select-repo](https://dashboard.render.com/select-repo) point Render at this repo — it auto-detects the blueprint.
+
+After the service is live, set `NEXT_PUBLIC_API_BASE` on Vercel to your Render URL (e.g. `https://streampulse-api.onrender.com`) and redeploy the frontend so the dashboard streams real metrics over WebSocket
 | `PORT`, `HOST` | no | Defaults `8080` / `0.0.0.0` |
 | `WEB_ORIGIN` | no | CORS allowlist for the dashboard |
 | `REDIS_URL` | no | Falls back to in-memory bus |
