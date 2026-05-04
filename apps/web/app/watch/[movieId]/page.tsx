@@ -23,8 +23,18 @@ export default function WatchPage({
   const [similar, setSimilar] = useState<Movie[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
+  const [muted, setMuted] = useState(true);
   const userId = useMemo(() => uid(), []);
   const videoRef = useRef<HTMLVideoElement | null>(null);
+
+  const unmute = () => {
+    const v = videoRef.current;
+    if (!v) return;
+    v.muted = false;
+    v.volume = 1;
+    setMuted(false);
+    void v.play().catch(() => {});
+  };
 
   // Load richer data from API if available.
   useEffect(() => {
@@ -76,36 +86,56 @@ export default function WatchPage({
       <section className="relative w-full bg-black">
         <div className="relative mx-auto aspect-video max-h-[80vh] w-full max-w-[1500px]">
           {canPlay && !error ? (
-            <video
-              ref={videoRef}
-              src={movie.streamUrl}
-              poster={movie.backdropUrl ?? movie.posterUrl}
-              controls
-              playsInline
-              autoPlay
-              muted
-              preload="auto"
-              className="h-full w-full bg-black"
-              onLoadedMetadata={() => {
-                setLoaded(true);
-                // Browsers allow muted autoplay; kick it off explicitly for safety.
-                const v = videoRef.current;
-                if (v && v.paused) {
-                  v.play().catch(() => {
-                    /* user-gesture required — controls are visible */
-                  });
+            <>
+              <video
+                ref={videoRef}
+                src={movie.streamUrl}
+                poster={movie.backdropUrl ?? movie.posterUrl}
+                controls
+                playsInline
+                autoPlay
+                muted
+                preload="auto"
+                className="h-full w-full bg-black"
+                onVolumeChange={() => {
+                  const v = videoRef.current;
+                  if (v) setMuted(v.muted || v.volume === 0);
+                }}
+                onLoadedMetadata={() => {
+                  setLoaded(true);
+                  // Browsers allow muted autoplay; kick it off explicitly for safety.
+                  const v = videoRef.current;
+                  if (v && v.paused) {
+                    v.play().catch(() => {
+                      /* user-gesture required — controls are visible */
+                    });
+                  }
+                }}
+                onPlay={() => send('play')}
+                onPause={() => send('pause')}
+                onSeeked={() => send('seek')}
+                onEnded={() => send('stop')}
+                onError={() =>
+                  setError(
+                    'This source is temporarily unavailable. Try another title from the catalog below.'
+                  )
                 }
-              }}
-              onPlay={() => send('play')}
-              onPause={() => send('pause')}
-              onSeeked={() => send('seek')}
-              onEnded={() => send('stop')}
-              onError={() =>
-                setError(
-                  'This source is temporarily unavailable. Try another title from the catalog below.'
-                )
-              }
-            />
+              />
+              {muted && loaded && (
+                <button
+                  type="button"
+                  onClick={unmute}
+                  className="absolute right-4 top-4 z-10 inline-flex items-center gap-2 rounded-full bg-white/95 px-4 py-2 text-sm font-bold text-bg shadow-lg backdrop-blur transition hover:bg-white animate-pulse-soft"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M11 5L6 9H2v6h4l5 4V5z" />
+                    <path d="M15 9a4 4 0 0 1 0 6" />
+                    <path d="M18 6a8 8 0 0 1 0 12" />
+                  </svg>
+                  Tap for sound
+                </button>
+              )}
+            </>
           ) : (
             <div className="flex h-full w-full flex-col items-center justify-center gap-4 bg-black/95 p-10 text-center">
               <div className="flex h-14 w-14 items-center justify-center rounded-full bg-panel text-ink2">
