@@ -37,6 +37,7 @@ export class LocalSimulator {
   private playable: Movie[];
   private timer: ReturnType<typeof setInterval> | null = null;
   private slowTimer: ReturnType<typeof setInterval> | null = null;
+  private insightTimer: ReturnType<typeof setInterval> | null = null;
   private totalEvents = 0;
   private recent: number[] = [];
   /** completedSessions per movie. */
@@ -56,20 +57,34 @@ export class LocalSimulator {
     const periodMs = Math.max(80, Math.floor(1000 / this.opts.hz));
     this.timer = setInterval(() => this.tick(), periodMs);
     this.slowTimer = setInterval(() => this.broadcastMetrics(), 1500);
-    // Static fallback insight; the real one comes from the API when present.
-    this.listeners.onInsight?.({
-      insight: 'Local demo mode — API backend not connected.',
-      recommendation: 'Deploy the API or set NEXT_PUBLIC_API_BASE to see live AI insights.',
-      source: 'fallback',
-      generatedAt: Date.now(),
-    });
+    // Real AI-powered insights via /api/insight (server-side Groq call).
+    // First fetch is delayed so we have meaningful metrics to send.
+    setTimeout(() => this.refreshInsight(), 2_000);
+    this.insightTimer = setInterval(() => this.refreshInsight(), 14_000);
   }
 
   stop(): void {
     if (this.timer) clearInterval(this.timer);
     if (this.slowTimer) clearInterval(this.slowTimer);
-    this.timer = this.slowTimer = null;
+    if (this.insightTimer) clearInterval(this.insightTimer);
+    this.timer = this.slowTimer = this.insightTimer = null;
     this.sessions.clear();
+  }
+
+  private async refreshInsight(): Promise<void> {
+    try {
+      const m = this.snapshotMetrics();
+      const res = await fetch('/api/insight', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(m),
+      });
+      if (!res.ok) return;
+      const insight = (await res.json()) as Insight;
+      this.listeners.onInsight?.(insight);
+    } catch {
+      // Network blip — keep last insight visible, retry on next tick.
+    }
   }
 
   private spawn(): void {
@@ -145,6 +160,10 @@ export class LocalSimulator {
   }
 
   private broadcastMetrics(): void {
+    this.listeners.onMetrics?.(this.snapshotMetrics());
+  }
+
+  private snapshotMetrics(): AggregateMetrics {
     const now = Date.now();
     const eps = this.recent.length / 5;
     const movieAgg = new Map<string, { viewers: Set<string>; watchSeconds: number }>();
@@ -192,7 +211,7 @@ export class LocalSimulator {
     alerts.sort((a, b) => b.dropOffRate - a.dropOffRate);
 
     const totalWatch = Array.from(movieAgg.values()).reduce((a, b) => a + b.watchSeconds, 0);
-    this.listeners.onMetrics?.({
+    return {
       activeUsers: this.sessions.size,
       eventsPerSecond: eps,
       totalEvents: this.totalEvents,
@@ -200,6 +219,6 @@ export class LocalSimulator {
       topMovies: top,
       dropOffAlerts: alerts.slice(0, 5),
       serverTime: now,
-    });
+    };
   }
 }

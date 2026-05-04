@@ -11,7 +11,20 @@ export function InsightPanel({ insight }: { insight: Insight | null }) {
           </svg>
         </div>
         <div className="min-w-0 flex-1">
-          <div className="text-sm font-semibold text-ink">AI insight</div>
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-semibold text-ink">AI insight</span>
+            {insight && (
+              <span
+                className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+                  insight.source === 'groq'
+                    ? 'bg-good/15 text-good'
+                    : 'bg-ink3/15 text-ink2'
+                }`}
+              >
+                {insight.source === 'groq' ? 'Groq · live' : 'Heuristic'}
+              </span>
+            )}
+          </div>
           {insight ? (
             <>
               <p className="mt-1 text-sm leading-relaxed text-ink/85">{insight.insight}</p>
